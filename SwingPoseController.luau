@@ -13,6 +13,13 @@ export type Hand = Types.Hand
 export type PoseConfig = Types.PoseConfig
 
 local EPSILON = 1e-4
+local DEBUG_LOGS = false
+
+local function debugLog(...)
+	if DEBUG_LOGS then
+		print("[SwingPoseController]", ...)
+	end
+end
 
 type JointRig = {
 	rootPart: BasePart,
@@ -46,13 +53,13 @@ end
 
 local function resolveJointRig(character: Model?): JointRig?
 	if not character then
-		print("[SwingPoseController] resolveJointRig: character is nil")
+		debugLog("resolveJointRig: character is nil")
 		return nil
 	end
 
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	if not rootPart or not rootPart:IsA("BasePart") then
-		print("[SwingPoseController] resolveJointRig: HumanoidRootPart is nil in character", character.Name)
+		debugLog("resolveJointRig: HumanoidRootPart is nil in character", character.Name)
 		return nil
 	end
 
@@ -74,7 +81,7 @@ local function resolveJointRig(character: Model?): JointRig?
 		end
 	end
 
-	print(string.format("[SwingPoseController] resolveJointRig: character=%s | rootJoint=%s (%s) | waist=%s (%s)",
+	debugLog(string.format("resolveJointRig: character=%s | rootJoint=%s (%s) | waist=%s (%s)",
 		character.Name,
 		rootJoint and rootJoint.Name or "NIL",
 		rootJoint and rootJoint.ClassName or "NIL",
@@ -204,9 +211,9 @@ function SwingPoseController:setPose(anchorPosition: Vector3, tangentVelocity: V
 	self._targetYaw = targetY
 	self._targetRoll = targetR
 
-	if os.clock() - lastPosePrint >= 0.5 then
+	if DEBUG_LOGS and os.clock() - lastPosePrint >= 0.5 then
 		lastPosePrint = os.clock()
-		print(string.format("[SwingPoseController] Target: Pitch=%.1f°, Yaw=%.1f°, Roll=%.1f° | Current: Pitch=%.1f°, Yaw=%.1f°, Roll=%.1f°",
+		debugLog(string.format("Target: Pitch=%.1f°, Yaw=%.1f°, Roll=%.1f° | Current: Pitch=%.1f°, Yaw=%.1f°, Roll=%.1f°",
 			math.deg(self._targetPitch), math.deg(self._targetYaw), math.deg(self._targetRoll),
 			math.deg(self._currentPitch), math.deg(self._currentYaw), math.deg(self._currentRoll)
 		))

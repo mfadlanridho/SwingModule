@@ -10,6 +10,10 @@ local Types = require(script.Types)
 local Constants = require(script.Constants)
 local PointCalculator = require(script.PointCalculator)
 local PointFinder = require(script.PointFinder)
+local PhysicsUtility = require(script.PhysicsUtility)
+local CustomPendulum = require(script.CustomPendulum)
+local TetherRenderer = require(script.TetherRenderer)
+local SwingPoseController = require(script.SwingPoseController)
 
 export type Hand = Types.Hand
 export type PointData = Types.PointData
@@ -17,6 +21,13 @@ export type HitResult = Types.HitResult
 export type SwingConfig = Types.SwingConfig
 export type DetectionConfig = Types.DetectionConfig
 export type OptimalPointConfig = Types.OptimalPointConfig
+export type PendulumConfig = Types.PendulumConfig
+export type PoseConfig = Types.PoseConfig
+export type ReleaseConfig = Types.ReleaseConfig
+export type TetherVisualConfig = Types.TetherVisualConfig
+export type SwingProjection = Types.SwingProjection
+export type PendulumContext = Types.PendulumContext
+export type ClampVelocityOptions = Types.ClampVelocityOptions
 
 local SwingModule = {}
 SwingModule.__index = SwingModule
@@ -24,6 +35,20 @@ SwingModule.__index = SwingModule
 SwingModule.Constants = Constants
 SwingModule.PointCalculator = PointCalculator
 SwingModule.PointFinder = PointFinder
+SwingModule.PhysicsUtility = PhysicsUtility
+SwingModule.CustomPendulum = CustomPendulum
+SwingModule.TetherRenderer = TetherRenderer
+SwingModule.SwingPoseController = SwingPoseController
+
+--- Evaluates one frame of circular pendulum physics towards an anchor point
+function SwingModule.stepPendulum(
+	context: PendulumContext,
+	anchorPosition: Vector3,
+	desiredRadius: number?,
+	configOverride: PendulumConfig?
+): SwingProjection
+	return CustomPendulum.step(context, anchorPosition, desiredRadius, configOverride)
+end
 
 --- Single-call helper to calculate the best physical anchor point given root CFrame, velocity, and candidate parts
 function SwingModule.findBestAnchor(

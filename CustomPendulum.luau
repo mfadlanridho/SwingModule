@@ -155,7 +155,8 @@ function CustomPendulum.step(
 	end
 
 	local currentPosition = rootPart.Position
-	local angle = PhysicsUtility.getAngleFromVertical(currentPosition, anchorPosition)
+	local signedAngle = PhysicsUtility.getAngleFromVertical(currentPosition, anchorPosition, steeredInput)
+	local angle = math.abs(signedAngle)
 	CustomPendulum.currentAngle = angle
 
 	-- 2. Compute perpendicular tangential force
@@ -219,6 +220,7 @@ function CustomPendulum.step(
 		targetVelocity = blendedVelocity,
 		forcePerpendicular = forcePerpendicular,
 		currentAngle = angle,
+		signedAngle = signedAngle,
 		accelerationMag = accelerationMag,
 	}
 end

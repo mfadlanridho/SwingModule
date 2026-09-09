@@ -51,16 +51,30 @@ function PhysicsUtility.getXZ(vector: Vector3): Vector3
 	return Vector3.new(vector.X, 0, vector.Z)
 end
 
---- Calculates the angle (in degrees) between the vector from anchor to position and the downward vertical (-Y)
-function PhysicsUtility.getAngleFromVertical(position: Vector3, anchorPosition: Vector3): number
+--- Calculates the angle (in degrees) between the vector from anchor to position and the downward vertical (-Y).
+--- If forwardDirection is provided, returns negative degrees when behind the anchor and positive when in front.
+function PhysicsUtility.getAngleFromVertical(
+	position: Vector3,
+	anchorPosition: Vector3,
+	forwardDirection: Vector3?
+): number
 	local dir = position - anchorPosition
 	if dir.Magnitude <= EPSILON then
 		return 0
 	end
 
-	local dot = dir.Unit:Dot(-Vector3.yAxis)
-	dot = math.clamp(dot, -1, 1)
-	return math.deg(math.acos(dot))
+	local dot = math.clamp(dir.Unit:Dot(-Vector3.yAxis), -1, 1)
+	local angle = math.deg(math.acos(dot))
+
+	if forwardDirection then
+		local fwdXZ = PhysicsUtility.getXZ(forwardDirection)
+		local dirXZ = PhysicsUtility.getXZ(dir)
+		if fwdXZ.Magnitude > EPSILON and dirXZ:Dot(fwdXZ) < 0 then
+			return -angle
+		end
+	end
+
+	return angle
 end
 
 --- Adjusts horizontal XZ magnitude while scaling Y proportionally to preserve vertical trajectory ratio

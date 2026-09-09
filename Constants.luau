@@ -48,7 +48,7 @@ local Constants = {
 
 	Pose = {
 		FullTiltSpeed = 60,
-		MaxPitchDegrees = 30,
+		MaxPitchDegrees = 60,
 		MaxYawDegrees = 30,
 		MaxRollDegrees = 40,
 		SmoothingSpeed = 12,

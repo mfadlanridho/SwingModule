@@ -65,6 +65,7 @@ export type SwingProjection = {
 	targetVelocity: Vector3,
 	forcePerpendicular: Vector3,
 	currentAngle: number,
+	signedAngle: number,
 	accelerationMag: number,
 }
 

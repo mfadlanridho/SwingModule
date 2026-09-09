@@ -16,8 +16,8 @@ local EPSILON = 1e-4
 
 type JointRig = {
 	rootPart: BasePart,
-	rootJoint: Motor6D?,
-	waist: Motor6D?,
+	rootJoint: Instance?,
+	waist: Instance?,
 }
 
 local SwingPoseController = {}
@@ -46,29 +46,41 @@ end
 
 local function resolveJointRig(character: Model?): JointRig?
 	if not character then
+		print("[SwingPoseController] resolveJointRig: character is nil")
 		return nil
 	end
 
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	if not rootPart or not rootPart:IsA("BasePart") then
+		print("[SwingPoseController] resolveJointRig: HumanoidRootPart is nil in character", character.Name)
 		return nil
 	end
 
-	local rootJoint: Motor6D? = nil
-	local waist: Motor6D? = nil
+	local rootJoint: Instance? = nil
+	local waist: Instance? = nil
 
 	for _, desc in ipairs(character:GetDescendants()) do
-		if desc:IsA("Motor6D") then
+		if desc:IsA("Motor6D") or desc:IsA("AnimationConstraint") then
 			if not waist and desc.Name == "Waist" then
 				waist = desc
 			end
 			if not rootJoint then
-				if desc.Part0 == rootPart or desc.Part1 == rootPart then
+				if desc.Name == "Root" or desc.Name == "RootJoint" then
+					rootJoint = desc
+				elseif desc:IsA("Motor6D") and (desc.Part0 == rootPart or desc.Part1 == rootPart) then
 					rootJoint = desc
 				end
 			end
 		end
 	end
+
+	print(string.format("[SwingPoseController] resolveJointRig: character=%s | rootJoint=%s (%s) | waist=%s (%s)",
+		character.Name,
+		rootJoint and rootJoint.Name or "NIL",
+		rootJoint and rootJoint.ClassName or "NIL",
+		waist and waist.Name or "NIL",
+		waist and waist.ClassName or "NIL"
+	))
 
 	if not rootJoint and not waist then
 		return nil
@@ -173,6 +185,8 @@ function SwingPoseController:computeAngles(anchorPosition: Vector3, tangentVeloc
 	return pitch, yaw, roll
 end
 
+local lastPosePrint = 0
+
 --- Sets the active target pose state
 function SwingPoseController:setPose(anchorPosition: Vector3, tangentVelocity: Vector3)
 	if not self._rig then
@@ -189,6 +203,14 @@ function SwingPoseController:setPose(anchorPosition: Vector3, tangentVelocity: V
 	self._targetPitch = targetP
 	self._targetYaw = targetY
 	self._targetRoll = targetR
+
+	if os.clock() - lastPosePrint >= 0.5 then
+		lastPosePrint = os.clock()
+		print(string.format("[SwingPoseController] Target: Pitch=%.1f°, Yaw=%.1f°, Roll=%.1f° | Current: Pitch=%.1f°, Yaw=%.1f°, Roll=%.1f°",
+			math.deg(self._targetPitch), math.deg(self._targetYaw), math.deg(self._targetRoll),
+			math.deg(self._currentPitch), math.deg(self._currentYaw), math.deg(self._currentRoll)
+		))
+	end
 end
 
 --- Clears the active pose and initiates smooth return to neutral
@@ -203,6 +225,15 @@ end
 function SwingPoseController:update(deltaTime: number)
 	local rig = self._rig
 	if not rig or not rig.rootPart.Parent then
+		return
+	end
+
+	-- If not swinging and already at neutral, do not touch transforms so animations play freely
+	if not self._active
+		and math.abs(self._currentPitch) < 1e-3
+		and math.abs(self._currentYaw) < 1e-3
+		and math.abs(self._currentRoll) < 1e-3
+	then
 		return
 	end
 
@@ -223,11 +254,11 @@ function SwingPoseController:update(deltaTime: number)
 	local waistRoll = self._currentRoll * waistWeights.roll
 
 	if rig.rootJoint then
-		rig.rootJoint.Transform = CFrame.Angles(rootPitch, rootYaw, rootRoll)
+		(rig.rootJoint :: any).Transform = CFrame.Angles(rootPitch, rootYaw, rootRoll)
 	end
 
 	if rig.waist then
-		rig.waist.Transform = CFrame.Angles(waistPitch, waistYaw, waistRoll)
+		(rig.waist :: any).Transform = CFrame.Angles(waistPitch, waistYaw, waistRoll)
 	end
 
 	-- Check if idle and close enough to neutral to zero out
@@ -244,10 +275,10 @@ function SwingPoseController:resetTransforms()
 	local rig = self._rig
 	if rig then
 		if rig.rootJoint then
-			rig.rootJoint.Transform = CFrame.identity
+			(rig.rootJoint :: any).Transform = CFrame.identity
 		end
 		if rig.waist then
-			rig.waist.Transform = CFrame.identity
+			(rig.waist :: any).Transform = CFrame.identity
 		end
 	end
 end

@@ -62,6 +62,7 @@ local Constants = {
 		LowArcMinUpwardVelocity = 15,
 		HighArcUpwardBoost = 35,
 		HighArcMinUpwardVelocity = 25,
+		MaxUpwardVelocity = 120,
 		MinHorizontalSpeed = 25,
 	} :: ReleaseConfig,
 

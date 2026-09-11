@@ -104,6 +104,7 @@ export type ReleaseConfig = {
 	HighArcUpwardBoost: number,
 	HighArcMinUpwardVelocity: number,
 	MinHorizontalSpeed: number,
+	MaxUpwardVelocity: number?,
 }
 
 export type SwingConfig = {
